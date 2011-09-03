@@ -17,11 +17,15 @@ func init(){
 	macros[int('(')] = seqReader 
 }
 
+func isWhiteSpace(rune int) bool{
+	return rune == ' ' || rune == ','
+}
+
 func seqReader(rune int, r io.RuneScanner) interface{}{
 	seq := make([]interface{},0)
 	for {
 		nrune,_,err := r.ReadRune()
-		for string(nrune) == " " {
+		for isWhiteSpace(nrune) {
 			nrune,_,err = r.ReadRune()
 		}
 		if err != nil || string(nrune) == ")"{
@@ -40,7 +44,7 @@ func read(r io.RuneScanner) interface{}{
 		if err != nil {
 			return nil
 		}
-		for rune == ' ' {
+		for isWhiteSpace(rune) {
 			rune,_,err = r.ReadRune()
 		}
 		if isDigit(rune) {
