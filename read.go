@@ -7,14 +7,15 @@ import (
 )
 
 func main(){
-	r := strings.NewReader("(def a (123 aa (345 d34)))")
+	r := strings.NewReader("(def a 12.33)")
 	fmt.Println(read(r))
 }
 
 type MacroReader  func (rune int,r io.RuneScanner) interface{}
 var macros []MacroReader = make([]MacroReader, 256)
 func init(){
-	macros[int('(')] = seqReader 
+	macros['('] = seqReader 
+	macros['"']      = stringReader
 }
 
 func isWhiteSpace(rune int) bool{
@@ -38,13 +39,28 @@ func seqReader(rune int, r io.RuneScanner) interface{}{
 	return seq
 }
 
+func stringReader(flag int, r io.RuneScanner) interface{}{
+	var s string = ""
+	for {
+		rune,_,err := r.ReadRune()
+		if err != nil {
+			panic("err")
+		}
+		if rune == '"' {
+			return s
+		}
+		s = s + string(rune)
+	}
+	return s
+}
+
 func read(r io.RuneScanner) interface{}{
 	rune,_,err := r.ReadRune()
 	for {
 		if err != nil {
 			return nil
 		}
-		for isWhiteSpace(rune) {
+		for ; isWhiteSpace(rune); {
 			rune,_,err = r.ReadRune()
 		}
 		if isDigit(rune) {
@@ -67,21 +83,33 @@ func isDigit(i int) bool {
 	return i < int('9') && i > int('0')
 }
 
-func readNumber(b int, r io.RuneScanner) string{
-	s := string(b)
+func readRune(r io.RuneScanner) int {
 	rune,_,err := r.ReadRune()
-	for ; err == nil && string(rune) != " " && string(rune) != "(" && string(rune) != ")"  ; {
-		s = s + string(rune)
-		rune,_,err = r.ReadRune()
+	if err != nil {
+		return -1
 	}
-	if err == nil {
-		r.UnreadRune()
-	}
+	return rune
+}
+func readNumber(b int, r io.RuneScanner) interface{}{
+	s := string(b)
 
+	for {
+		rune := readRune(r)
+		if (rune == -1 || isWhiteSpace(rune) || rune == ')'){
+			r.UnreadRune()
+			return s
+		}
+		s = s + string(rune)
+	}
+	
+	return matchNumer(s)
+}
+
+func matchNumer(s string) interface{}{
 	return s
 }
 
-func readObj(b int, r io.RuneScanner) string{
+func readObj(b int, r io.RuneScanner) interface{}{
 	
 	return readNumber(b,r)
 }
