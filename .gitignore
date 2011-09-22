@@ -1,3 +1,5 @@
 *.8
 *.exe
 *.bat
+bin
+pkg
